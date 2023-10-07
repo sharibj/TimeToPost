@@ -1,0 +1,5 @@
+{
+  "ssm:account=257992502925:parameterName=/time-to-post/linkedin-client-id:region=eu-central-1": "7828m6408p27iu",
+  "ssm:account=257992502925:parameterName=/time-to-post/linkedin-client-secret:region=eu-central-1": "AQICAHg1/1KQQWL+hNXstozJdApGdSKpoTB6ci70NbmwEV3dKAGamvm9U0fEsW1chgsfIp2TAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMtFbO9C1uxzUpdWQRAgEQgCuIFcZhJgm+wJHT0Sy43Bxc3wUxXUqb4aTuoFw45Hm51/pqujz+LGJ9n3ZC",
+  "ssm:account=257992502925:parameterName=/time-to-post/login-url:region=eu-central-1": "https://jwt.io"
+}
