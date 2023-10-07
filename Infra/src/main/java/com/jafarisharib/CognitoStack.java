@@ -40,6 +40,14 @@ public class CognitoStack extends Stack {
 
         // Generate Hosted UI Sign in URL and store in ssm
         addSignInUrlToSsm(userPoolDomain, userPoolClient);
+
+        // Create Identity Pool (manually for now)
+        /**
+         * Identity Pools are in a separate module while the API is being stabilized.
+         * Once we stabilize the module, they will be included into the stable aws-cognito library.
+         * Please provide feedback on this experience by creating an issue here.
+         */
+
     }
 
     private String addSignInUrlToSsm(UserPoolDomain userPoolDomain, UserPoolClient userPoolClient) {
