@@ -29,6 +29,10 @@ public class CognitoStack extends Stack {
                 .signInCaseSensitive(false)
                 .build();
 
+        addSsmStringParam("cognito-userpool-id",
+                userPool.getUserPoolId(),
+                "Cognito Userpool ID");
+
         // Add Domain
         UserPoolDomain userPoolDomain = addDomain(userPool);
         addSsmStringParam("cognito-domain",
