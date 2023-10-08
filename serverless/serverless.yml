@@ -1,0 +1,47 @@
+org: sharibxw
+app: time-to-post
+service: serverless
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: eu-central-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/time-to-post/*"
+
+custom:
+  serverlessSsmFetch:
+    COGNITO_URL: /time-to-post/cognito-hostedui-url
+    COGNITO_USERPOOL_ID: /time-to-post/cognito-userpool-id
+    COGNITO_IDENTITYPOOL_ID: /time-to-post/cognito-identitypool-id
+    COGNITO_CLIENT_ID: /time-to-post/cognito-client-id
+    COGNITO_DOMAIN: /time-to-post/cognito-domain
+    LOGIN_URI: /time-to-post/login-url
+
+
+functions:
+  login:
+    handler: login.handler
+    ssmToEnvironment:
+      - COGNITO_URL
+      - COGNITO_USERPOOL_ID
+      - COGNITO_IDENTITYPOOL_ID
+      - COGNITO_CLIENT_ID
+      - COGNITO_DOMAIN
+      - LOGIN_URI
+    environment:
+      REGION: "${aws:region}"
+      DYNAMO_TABLE_NAME: "SjTestIdPoolTable"
+      POSTS_BUCKET_NAME: "sjtestcognitobucket"
+      POSTS_OBJECT_NAME: "posts.txt"
+    events:
+      - http:
+          method: get
+          path: time-to-post
+plugins:
+  - serverless-python-requirements
+  - serverless-ssm-fetch
