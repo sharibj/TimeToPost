@@ -31,12 +31,21 @@ public class CognitoStack extends Stack {
 
         // Add Domain
         UserPoolDomain userPoolDomain = addDomain(userPool);
+        addSsmStringParam("cognito-domain",
+                userPoolDomain.baseUrl(),
+                "Cognito Userpool Domain");
 
         // Create Identity Provider
         UserPoolIdentityProviderOidc linkedinProvider = createLinkedinIdp(userPool);
 
         // Create Client App
         UserPoolClient userPoolClient = createClient(userPool, linkedinProvider);
+        addSsmStringParam("cognito-client-id",
+                userPoolClient.getUserPoolClientId(),
+                "Cognito Userpool Client Id");
+        addSsmStringParam("cognito-client-secret",
+                userPoolClient.getUserPoolClientSecret().unsafeUnwrap(),
+                "Cognito Userpool Client Secret");
 
         // Generate Hosted UI Sign in URL and store in ssm
         addSignInUrlToSsm(userPoolDomain, userPoolClient);
@@ -104,7 +113,7 @@ public class CognitoStack extends Stack {
         return linkedinProvider;
     }
 
-    private UserPoolClient createClient(UserPool userPool, UserPoolIdentityProviderOidc linkedinProvider) {
+    private static UserPoolClient createClient(UserPool userPool, UserPoolIdentityProviderOidc linkedinProvider) {
         UserPoolClient userPoolClient = userPool.addClient("app-client", UserPoolClientOptions.builder()
                 .userPoolClientName(APP_NAME + "-Userpool-Client")
                 .supportedIdentityProviders(List.of(UserPoolClientIdentityProvider.custom(linkedinProvider.getProviderName())))
@@ -120,12 +129,6 @@ public class CognitoStack extends Stack {
 //                        .logoutUrls(List.of("https://my-app-domain.com/signin"))
                         .build())
                 .build());
-        addSsmStringParam("cognito-client-id",
-                userPoolClient.getUserPoolClientId(),
-                "Cognito Userpool Client Id");
-        addSsmStringParam("cognito-client-secret",
-                userPoolClient.getUserPoolClientSecret().unsafeUnwrap(),
-                "Cognito Userpool Client Secret");
         return userPoolClient;
     }
 
