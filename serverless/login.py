@@ -231,8 +231,7 @@ def initialize_s3(user_id, credentials):
     try:
         bucket_name = os.environ.get("POSTS_BUCKET_NAME")
         # Use the S3 client to download the object
-        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        object_content = response['Body'].read()
+        s3_client.get_object(Bucket=bucket_name, Key=object_key)
         # You can process the object_content as needed
     except Exception as e:
         print("Error reading object from S3:", str(e))
@@ -245,6 +244,5 @@ def initialize_s3(user_id, credentials):
                 Key=object_key,
                 Body=empty_content.encode('utf-8')
             )
-            object_content = 'Created initial empty posts.txt'.encode('utf-8')
         except Exception as e:
             print("Error putting object in S3:", str(e))
