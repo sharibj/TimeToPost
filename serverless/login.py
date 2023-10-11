@@ -205,7 +205,8 @@ def put_tokens_in_dynamodb(user_id, token_data, credentials):
 
         # Define the item to be added
         item = {
-            'userid': user_id,
+            'username': user_id,
+            'channel': "linkedin",
             'access_token': token_data.access_token,
             'refresh_token': token_data.refresh_token
         }

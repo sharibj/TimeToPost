@@ -35,8 +35,8 @@ functions:
       - LOGIN_URI
     environment:
       REGION: "${aws:region}"
-      DYNAMO_TABLE_NAME: "SjTestIdPoolTable"
-      POSTS_BUCKET_NAME: "sjtestcognitobucket"
+      DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
+      POSTS_BUCKET_NAME: "time-to-post-pool-bucket"
       POSTS_OBJECT_NAME: "posts.txt"
     events:
       - http:
