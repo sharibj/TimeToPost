@@ -10,7 +10,6 @@ import software.constructs.Construct;
 import java.util.List;
 
 public class CognitoStack extends Stack {
-    static final String APP_NAME = "Time-To-Post";
 
     public CognitoStack(final Construct scope, final String id) {
         this(scope, id, null);
@@ -25,7 +24,7 @@ public class CognitoStack extends Stack {
     private void ConfigureCognitoUserPool() {
         // Create User Pool
         UserPool userPool = UserPool.Builder.create(this, "userpool")
-                .userPoolName(APP_NAME + "-Userpool")
+                .userPoolName(TimeToPostApp.APP_NAME + "-Userpool")
                 .signInCaseSensitive(false)
                 .build();
 
@@ -65,7 +64,7 @@ public class CognitoStack extends Stack {
 
     private String addSignInUrlToSsm(UserPoolDomain userPoolDomain, UserPoolClient userPoolClient) {
         String appLoginUri = StringParameter.valueForStringParameter(
-                this, buildSsmParamName("login-url"));
+                this, TimeToPostApp.buildSsmParamName("login-url"));
 
         String hostedUiSignInUrl = userPoolDomain.signInUrl(userPoolClient, SignInUrlOptions.builder()
                 .redirectUri(appLoginUri)
@@ -80,7 +79,7 @@ public class CognitoStack extends Stack {
     private static UserPoolDomain addDomain(UserPool userPool) {
         UserPoolDomain userPoolDomain = userPool.addDomain("CognitoDomain", UserPoolDomainOptions.builder()
                 .cognitoDomain(CognitoDomainOptions.builder()
-                        .domainPrefix(APP_NAME.toLowerCase())
+                        .domainPrefix(TimeToPostApp.APP_NAME.toLowerCase())
                         .build())
                 .build());
         return userPoolDomain;
@@ -88,9 +87,9 @@ public class CognitoStack extends Stack {
 
     private UserPoolIdentityProviderOidc createLinkedinIdp(UserPool userPool) {
         String linkedinClientId = StringParameter.valueForStringParameter(
-                this, buildSsmParamName("linkedin-client-id"));
+                this, TimeToPostApp.buildSsmParamName("linkedin-client-id"));
         String linkedinClientSecret = StringParameter.valueForStringParameter(
-                this, buildSsmParamName("linkedin-client-secret"));
+                this, TimeToPostApp.buildSsmParamName("linkedin-client-secret"));
 
         OidcEndpoints linkedinEndpoints = OidcEndpoints.builder()
                 .authorization("https://www.linkedin.com/oauth/v2/authorization")
@@ -119,7 +118,7 @@ public class CognitoStack extends Stack {
 
     private static UserPoolClient createClient(UserPool userPool, UserPoolIdentityProviderOidc linkedinProvider) {
         UserPoolClient userPoolClient = userPool.addClient("app-client", UserPoolClientOptions.builder()
-                .userPoolClientName(APP_NAME + "-Userpool-Client")
+                .userPoolClientName(TimeToPostApp.APP_NAME + "-Userpool-Client")
                 .supportedIdentityProviders(List.of(UserPoolClientIdentityProvider.custom(linkedinProvider.getProviderName())))
                 .generateSecret(true)
                 .oAuth(OAuthSettings.builder()
@@ -136,13 +135,9 @@ public class CognitoStack extends Stack {
         return userPoolClient;
     }
 
-    private static String buildSsmParamName(String paramName) {
-        return "/" + APP_NAME.toLowerCase() + "/" + paramName;
-    }
-
     private StringParameter addSsmStringParam(String name, String value, String description) {
         return new StringParameter(this, name, StringParameterProps.builder()
-                .parameterName(buildSsmParamName(name))
+                .parameterName(TimeToPostApp.buildSsmParamName(name))
                 .description(description)
                 .stringValue(value)
                 .build());
