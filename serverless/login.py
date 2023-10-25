@@ -10,24 +10,50 @@ def handler(event, context):
     code = get_code_from_event(event)
     if not code:
         return get_redirect_to_cognito_response()
-
+    print("Auth Code:")
+    print(code)
+    headers = event.get('headers', {})
+    print("Existing Cookie")
+    print(headers.get('Cookie', ''))
     token_data = exchange_code_for_tokens(code)
     if not token_data:
         return get_redirect_to_cognito_response()
+    #
+    # user_id = get_sub_from_jwt(token_data.id_token)
+    # if not user_id:
+    #     return get_redirect_to_cognito_response()
+    #
+    # response = get_success_response(token_data.id_token)
+    #
+    # # TODO: Consider doing the below part async
+    # # Below code is written to ignore failures on purpose
+    # credentials = get_creds_for_id(token_data.id_token)
+    # put_tokens_in_dynamodb(user_id, token_data, credentials)
+    # initialize_s3(user_id, credentials)
+    return get_response(token_data.access_token)
 
-    user_id = get_sub_from_jwt(token_data.id_token)
-    if not user_id:
-        return get_redirect_to_cognito_response()
+def get_response(access_token):
+    try:
+        with open('ui.html', 'r') as file:
+            html_content = file.read()
+    except FileNotFoundError:
+        return {
+            "statusCode": 404,
+            "body": "File not found"
+        }
 
-    response = get_success_response(token_data.id_token)
 
-    # TODO: Consider doing the below part async
-    # Below code is written to ignore failures on purpose
-    credentials = get_creds_for_id(token_data.id_token)
-    put_tokens_in_dynamodb(user_id, token_data, credentials)
-    initialize_s3(user_id, credentials)
+    # Construct the HTTP response with the access token as a cookie
+    response = {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html",
+            "Set-Cookie": f"access_token={access_token}; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
+        },
+        "body": html_content
+    }
+
     return response
-
 
 def get_success_response(id_token):
     body = {
@@ -121,6 +147,8 @@ def exchange_code_for_tokens(code):
         # Read and parse the JSON response
         response_data = response.read().decode('utf-8')
         parsed_response = json.loads(response_data)
+        print("Oauth Tokens:")
+        print(parsed_response)
 
         # Extract the relevant token data
         token_data = TokenData(parsed_response.get('id_token'),

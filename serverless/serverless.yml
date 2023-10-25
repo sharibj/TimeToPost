@@ -7,11 +7,14 @@ provider:
   name: aws
   runtime: python3.9
   region: eu-central-1
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - ssm:GetParameter
-      Resource: "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/time-to-post/*"
+  iam:
+    role:
+      name: get-param-role
+      statements:
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+          Resource: "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/time-to-post/*"
 
 custom:
   serverlessSsmFetch:
@@ -22,18 +25,57 @@ custom:
     COGNITO_DOMAIN: /time-to-post/cognito-domain
     LOGIN_URI: /time-to-post/login-url
 
-
+resources:
+  Resources:
+    pushLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: TimeToPostScheduledLambdaRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: DynamoPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: dynamodb:GetItem
+                  Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/Time-To-Post-Tokens-Table"
+          - PolicyName: S3Policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                    - s3:PutObject
+                  Resource:
+                    - "arn:aws:s3:::time-to-post-pool-bucket"
+                    - "arn:aws:s3:::time-to-post-pool-bucket/*"
 functions:
+  push:
+    handler: push.handler
+    role: pushLambdaRole
+    environment:
+      REGION: "${aws:region}"
+      DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
+      POSTS_BUCKET_NAME: "time-to-post-pool-bucket"
+      POSTS_OBJECT_NAME: "posts.txt"
   login:
     handler: login.handler
-    ssmToEnvironment:
-      - COGNITO_URL
-      - COGNITO_USERPOOL_ID
-      - COGNITO_IDENTITYPOOL_ID
-      - COGNITO_CLIENT_ID
-      - COGNITO_DOMAIN
-      - LOGIN_URI
     environment:
+      COGNITO_URL: ${ssm:/time-to-post/cognito-hostedui-url}
+      COGNITO_USERPOOL_ID: ${ssm:/time-to-post/cognito-userpool-id}
+      COGNITO_IDENTITYPOOL_ID: ${ssm:/time-to-post/cognito-identitypool-id}
+      COGNITO_CLIENT_ID: ${ssm:/time-to-post/cognito-client-id}
+      COGNITO_DOMAIN: ${ssm:/time-to-post/cognito-domain}
+      LOGIN_URI: ${ssm:/time-to-post/login-url}
       REGION: "${aws:region}"
       DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
       POSTS_BUCKET_NAME: "time-to-post-pool-bucket"
@@ -44,4 +86,3 @@ functions:
           path: time-to-post
 plugins:
   - serverless-python-requirements
-  - serverless-ssm-fetch
