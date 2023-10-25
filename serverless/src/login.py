@@ -10,11 +10,11 @@ def handler(event, context):
     code = get_code_from_event(event)
     if not code:
         return get_redirect_to_cognito_response()
-    print("Auth Code:")
-    print(code)
-    headers = event.get('headers', {})
-    print("Existing Cookie")
-    print(headers.get('Cookie', ''))
+    # print("Auth Code:")
+    # print(code)
+    # headers = event.get('headers', {})
+    # print("Existing Cookie")
+    # print(headers.get('Cookie', ''))
     token_data = exchange_code_for_tokens(code)
     if not token_data:
         return get_redirect_to_cognito_response()
@@ -39,7 +39,7 @@ def get_response(access_token):
     except FileNotFoundError:
         return {
             "statusCode": 404,
-            "body": "File not found"
+            "body": "UI File not found"
         }
 
 
@@ -53,18 +53,6 @@ def get_response(access_token):
         "body": html_content
     }
 
-    return response
-
-def get_success_response(id_token):
-    body = {
-        "message": "Go Serverless v3.0! Your function executed successfully!",
-        "id_token": id_token
-    }
-    headers = {
-        "Set-Cookie": f"id_token={id_token}; HttpOnly; Secure; SameSite=None; Path=/;",
-        "Content-Type": "application/json"
-    }
-    response = {"statusCode": 200, "body": json.dumps(body), "headers": headers}
     return response
 
 
@@ -164,114 +152,114 @@ def exchange_code_for_tokens(code):
     return token_data
 
 
-def get_sub_from_jwt(jwt):
-    user_id = None
-    # Decode the JWT token to access the 'sub' claim (user ID)
-    parts = jwt.split('.')
+# def get_sub_from_jwt(jwt):
+#     user_id = None
+#     # Decode the JWT token to access the 'sub' claim (user ID)
+#     parts = jwt.split('.')
 
-    if len(parts) != 3:
-        print("Error! Invalid JWT format")
-    else:
-        payload = json.loads(base64.b64decode(parts[1] + '==').decode('utf-8'))
-        # Extract the 'sub' claim (user ID)
-        user_id = payload.get('sub')
+#     if len(parts) != 3:
+#         print("Error! Invalid JWT format")
+#     else:
+#         payload = json.loads(base64.b64decode(parts[1] + '==').decode('utf-8'))
+#         # Extract the 'sub' claim (user ID)
+#         user_id = payload.get('sub')
 
-    return user_id
-
-
-class Credentials:
-    def __init__(self, access_key_id, secret_access_key, session_token):
-        self.access_key_id = access_key_id
-        self.secret_access_key = secret_access_key
-        self.session_token = session_token
+#     return user_id
 
 
-def get_creds_for_id(id_token):
-    # Fetch environment variables
-    region = os.environ.get("REGION")
-    user_pool_id = os.environ.get("COGNITO_USERPOOL_ID")
-    identity_pool_id = os.environ.get("COGNITO_IDENTITYPOOL_ID")
-
-    # To pass the Cognito User Pool JWT Token, you would need to use the Logins Map in the GetId API call.
-    # 'cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>': '<JWT ID Token>'
-    logins_key = 'cognito-idp.%s.amazonaws.com/%s' % (region, user_pool_id)
-    logins = {logins_key: id_token}
-
-    # Configure the credentials provider to use your identity pool
-    cognito_identity = boto3.client('cognito-identity', region_name=region)
-
-    # Make the call to id
-    response = cognito_identity.get_id(
-        IdentityPoolId=identity_pool_id,
-        Logins=logins
-    )
-    identity_id = response['IdentityId']
-
-    # Get the credentials
-    credentials = cognito_identity.get_credentials_for_identity(
-        IdentityId=identity_id,
-        Logins=logins
-    )
-
-    return Credentials(credentials['Credentials']['AccessKeyId'],
-                       credentials['Credentials']['SecretKey'],
-                       credentials['Credentials']['SessionToken'])
+# class Credentials:
+#     def __init__(self, access_key_id, secret_access_key, session_token):
+#         self.access_key_id = access_key_id
+#         self.secret_access_key = secret_access_key
+#         self.session_token = session_token
 
 
-def put_tokens_in_dynamodb(user_id, token_data, credentials):
-    # Initialize a DynamoDB resource
-    dynamodb = boto3.resource('dynamodb',
-                              aws_access_key_id=credentials.access_key_id,
-                              aws_secret_access_key=credentials.secret_access_key,
-                              aws_session_token=credentials.session_token,
-                              region_name=os.environ.get("REGION"))
+# def get_creds_for_id(id_token):
+#     # Fetch environment variables
+#     region = os.environ.get("REGION")
+#     user_pool_id = os.environ.get("COGNITO_USERPOOL_ID")
+#     identity_pool_id = os.environ.get("COGNITO_IDENTITYPOOL_ID")
 
-    try:
-        # Specify the table name
-        # TODO Add CDK code to create this table and set the name in param store
-        table = dynamodb.Table(os.environ.get("DYNAMO_TABLE_NAME"))
+#     # To pass the Cognito User Pool JWT Token, you would need to use the Logins Map in the GetId API call.
+#     # 'cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>': '<JWT ID Token>'
+#     logins_key = 'cognito-idp.%s.amazonaws.com/%s' % (region, user_pool_id)
+#     logins = {logins_key: id_token}
 
-        # Define the item to be added
-        item = {
-            'username': user_id,
-            'channel': "linkedin",
-            'access_token': token_data.access_token,
-            'refresh_token': token_data.refresh_token
-        }
+#     # Configure the credentials provider to use your identity pool
+#     cognito_identity = boto3.client('cognito-identity', region_name=region)
 
-        # Use the put_item method to add the item to the table
-        table.put_item(Item=item)
+#     # Make the call to id
+#     response = cognito_identity.get_id(
+#         IdentityPoolId=identity_pool_id,
+#         Logins=logins
+#     )
+#     identity_id = response['IdentityId']
 
-    except Exception as e:
-        # Handle exceptions, e.g., table not found, permissions issues, etc.
-        print(f"Error adding item to DynamoDB: {str(e)}")
-        return False
+#     # Get the credentials
+#     credentials = cognito_identity.get_credentials_for_identity(
+#         IdentityId=identity_id,
+#         Logins=logins
+#     )
+
+#     return Credentials(credentials['Credentials']['AccessKeyId'],
+#                        credentials['Credentials']['SecretKey'],
+#                        credentials['Credentials']['SessionToken'])
 
 
-def initialize_s3(user_id, credentials):
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=credentials.access_key_id,
-                             aws_secret_access_key=credentials.secret_access_key,
-                             aws_session_token=credentials.session_token,
-                             region_name=os.environ.get("REGION"))
+# def put_tokens_in_dynamodb(user_id, token_data, credentials):
+#     # Initialize a DynamoDB resource
+#     dynamodb = boto3.resource('dynamodb',
+#                               aws_access_key_id=credentials.access_key_id,
+#                               aws_secret_access_key=credentials.secret_access_key,
+#                               aws_session_token=credentials.session_token,
+#                               region_name=os.environ.get("REGION"))
 
-    object_key = '%s/%s' % (user_id, os.environ.get("POSTS_OBJECT_NAME"))
+#     try:
+#         # Specify the table name
+#         # TODO Add CDK code to create this table and set the name in param store
+#         table = dynamodb.Table(os.environ.get("DYNAMO_TABLE_NAME"))
 
-    try:
-        bucket_name = os.environ.get("POSTS_BUCKET_NAME")
-        # Use the S3 client to download the object
-        s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        # You can process the object_content as needed
-    except Exception as e:
-        print("Error reading object from S3:", str(e))
-        # attempt to create new file
-        try:
-            # Create an empty posts.txt file
-            empty_content = ''
-            s3_client.put_object(
-                Bucket=bucket_name,
-                Key=object_key,
-                Body=empty_content.encode('utf-8')
-            )
-        except Exception as e:
-            print("Error putting object in S3:", str(e))
+#         # Define the item to be added
+#         item = {
+#             'username': user_id,
+#             'channel': "linkedin",
+#             'access_token': token_data.access_token,
+#             'refresh_token': token_data.refresh_token
+#         }
+
+#         # Use the put_item method to add the item to the table
+#         table.put_item(Item=item)
+
+#     except Exception as e:
+#         # Handle exceptions, e.g., table not found, permissions issues, etc.
+#         print(f"Error adding item to DynamoDB: {str(e)}")
+#         return False
+
+
+# def initialize_s3(user_id, credentials):
+#     s3_client = boto3.client('s3',
+#                              aws_access_key_id=credentials.access_key_id,
+#                              aws_secret_access_key=credentials.secret_access_key,
+#                              aws_session_token=credentials.session_token,
+#                              region_name=os.environ.get("REGION"))
+
+#     object_key = '%s/%s' % (user_id, os.environ.get("POSTS_OBJECT_NAME"))
+
+#     try:
+#         bucket_name = os.environ.get("POSTS_BUCKET_NAME")
+#         # Use the S3 client to download the object
+#         s3_client.get_object(Bucket=bucket_name, Key=object_key)
+#         # You can process the object_content as needed
+#     except Exception as e:
+#         print("Error reading object from S3:", str(e))
+#         # attempt to create new file
+#         try:
+#             # Create an empty posts.txt file
+#             empty_content = ''
+#             s3_client.put_object(
+#                 Bucket=bucket_name,
+#                 Key=object_key,
+#                 Body=empty_content.encode('utf-8')
+#             )
+#         except Exception as e:
+#             print("Error putting object in S3:", str(e))
