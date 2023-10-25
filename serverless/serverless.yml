@@ -60,7 +60,7 @@ resources:
                     - "arn:aws:s3:::time-to-post-pool-bucket/*"
 functions:
   push:
-    handler: push.handler
+    handler: src/push.handler
     role: pushLambdaRole
     environment:
       REGION: "${aws:region}"
@@ -68,7 +68,7 @@ functions:
       POSTS_BUCKET_NAME: "time-to-post-pool-bucket"
       POSTS_OBJECT_NAME: "posts.txt"
   login:
-    handler: login.handler
+    handler: src/login.handler
     environment:
       COGNITO_URL: ${ssm:/time-to-post/cognito-hostedui-url}
       COGNITO_USERPOOL_ID: ${ssm:/time-to-post/cognito-userpool-id}

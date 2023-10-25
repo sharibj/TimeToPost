@@ -1,3 +1,19 @@
+Virtual Environment:
+```
+virtualenv venv
+chmod -R 777 venv       
+source venv/bin/activate
+```
+Install local dependencies
+```
+pip install -r requirements.txt
+```
+
+test
+```
+pytest
+```
+
 <!--
 title: 'AWS Simple HTTP Endpoint example in Python'
 description: 'This template demonstrates how to make a simple HTTP API with Python running on AWS Lambda and API Gateway using the Serverless Framework.'
