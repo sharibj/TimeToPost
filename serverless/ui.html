@@ -22,14 +22,16 @@
     function initiateLinkedInAccess() {
         // Add your LinkedIn access token flow using code grant here
         console.log("Initiating LinkedIn access token flow...");
-        const linkedInClientId = '7828m6408p27iu';
-        const redirectUri = 'https://vxtdoymdo9.execute-api.eu-central-1.amazonaws.com/dev/time-to-post';
+        let currentUrl = window.location.href;
 
-        // Construct the LinkedIn authorization URL
-        const authorizationUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedInClientId}&redirect_uri=${redirectUri}&state=STATE&scope=r_liteprofile%20r_emailaddress%20w_member_social`;
+        // Remove any query parameters from the current URL
+        const urlWithoutParams = currentUrl.split("?")[0];
 
-        // Redirect the user to the LinkedIn authorization URL
-        window.location.href = authorizationUrl;
+        // Append '/authorize' to the current URL
+        const redirectWithAuthorize = `${urlWithoutParams}/authorize`;
+
+        // Redirect the user to the modified URL
+        window.location.href = redirectWithAuthorize;
     }
 </script>
 </body>

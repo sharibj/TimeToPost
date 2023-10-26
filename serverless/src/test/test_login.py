@@ -3,11 +3,24 @@ from login import TokenData
 import pytest
 from unittest.mock import patch
 import io
+# TODO Add test for cookie
+def side_effect(env_var_name):
+        if env_var_name == "COGNITO_URL":
+            return "https://cognito_url"
+        elif env_var_name == "REGION":
+            return "test_region"
+        elif env_var_name == "COGNITO_USERPOOL_ID":
+            return "test_user_pool"
+        elif env_var_name == "COGNITO_IDENTITYPOOL_ID":
+            return "test_identity_pool"
+        else:
+            return None
 
+    
 @patch('os.environ.get')
 def test_redirect_to_cognito_when_no_code(mock_env_get):
     # given
-    mock_env_get.side_effect = lambda env_var_name: "https://cognito_url" if env_var_name == "COGNITO_URL" else None
+    mock_env_get.side_effect = side_effect
     event = {"queryStringParameters": {"not_code": "no_code_present"}}
     # when
     result = login.handler(event, None)
@@ -26,7 +39,7 @@ def test_redirect_to_cognito_when_no_code(mock_env_get):
 @patch('login.exchange_code_for_tokens')
 def test_redirect_to_cognito_when_code_can_not_be_exchanged(mock_exchange, mock_env_get):
     # given
-    mock_env_get.side_effect = lambda env_var_name: "https://cognito_url" if env_var_name == "COGNITO_URL" else None
+    mock_env_get.side_effect = side_effect
     mock_exchange.side_effect = lambda code: None if code == "invalid_code" else TokenData("","","")
     event = {"queryStringParameters": {"code": "invalid_code"}}
     # when
@@ -77,7 +90,7 @@ def test_return_ui_html_for_valid_code(mock_exchange,mock_open):
         "statusCode": 200,
         "headers": {
             "Content-Type": "text/html",
-            "Set-Cookie": f"access_token=test_access_token; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
+            "Set-Cookie": f"id_token=test_id_token; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
         },
         "body": "UI HTML Code"
     }

@@ -7,32 +7,60 @@ import urllib.parse
 
 
 def handler(event, context):
+    id_token = extract_access_token_from_cookie(event)
+    if id_token and is_token_valid(id_token):
+        return get_ui_response(id_token)
     code = get_code_from_event(event)
     if not code:
         return get_redirect_to_cognito_response()
-    # print("Auth Code:")
-    # print(code)
-    # headers = event.get('headers', {})
-    # print("Existing Cookie")
-    # print(headers.get('Cookie', ''))
     token_data = exchange_code_for_tokens(code)
     if not token_data:
         return get_redirect_to_cognito_response()
-    #
-    # user_id = get_sub_from_jwt(token_data.id_token)
-    # if not user_id:
-    #     return get_redirect_to_cognito_response()
-    #
-    # response = get_success_response(token_data.id_token)
-    #
-    # # TODO: Consider doing the below part async
-    # # Below code is written to ignore failures on purpose
-    # credentials = get_creds_for_id(token_data.id_token)
-    # put_tokens_in_dynamodb(user_id, token_data, credentials)
-    # initialize_s3(user_id, credentials)
-    return get_response(token_data.access_token)
+    return get_ui_response(token_data.id_token)
 
-def get_response(access_token):
+def is_token_valid(id_token):
+    return get_creds_for_id(id_token)
+
+def get_creds_for_id(id_token):
+    # Fetch environment variables
+    region = os.environ.get("REGION")
+    user_pool_id = os.environ.get("COGNITO_USERPOOL_ID")
+    identity_pool_id = os.environ.get("COGNITO_IDENTITYPOOL_ID")
+
+    # To pass the Cognito User Pool JWT Token, you would need to use the Logins Map in the GetId API call.
+    # 'cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>': '<JWT ID Token>'
+    logins_key = 'cognito-idp.%s.amazonaws.com/%s' % (region, user_pool_id)
+    logins = {logins_key: id_token}
+
+    # Configure the credentials provider to use your identity pool
+    cognito_identity = boto3.client('cognito-identity', region_name=region)
+
+    try:
+        # Make the call to id
+        response = cognito_identity.get_id(
+            IdentityPoolId=identity_pool_id,
+            Logins=logins
+        )
+        # identity_id = response['IdentityId']
+        return response
+    except cognito_identity.exceptions.NotAuthorizedException as e:
+        print(f"NotAuthorizedException: {e}")
+        return False
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return False
+
+def extract_access_token_from_cookie(event):
+    headers = event.get('headers', {})
+    cookies = headers.get('Cookie', '')
+    if cookies:
+        cookie_list = cookies.split(';')
+        for cookie in cookie_list:
+            if 'id_token' in cookie:
+                return cookie.split('id_token=')[1]
+    return None
+
+def get_ui_response(id_token):
     try:
         with open('ui.html', 'r') as file:
             html_content = file.read()
@@ -42,19 +70,16 @@ def get_response(access_token):
             "body": "UI File not found"
         }
 
-
-    # Construct the HTTP response with the access token as a cookie
     response = {
         "statusCode": 200,
         "headers": {
             "Content-Type": "text/html",
-            "Set-Cookie": f"access_token={access_token}; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
+            "Set-Cookie": f"id_token={id_token}; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
         },
         "body": html_content
     }
 
     return response
-
 
 def get_code_from_event(event):
     code = None
@@ -64,7 +89,6 @@ def get_code_from_event(event):
             code = query_parameters["code"]
     return code
 
-
 def get_redirect_to_cognito_response():
     response = {
         "statusCode": 302,
@@ -73,7 +97,6 @@ def get_redirect_to_cognito_response():
         }
     }
     return response
-
 
 def get_parameter(parameter_name):
     try:
@@ -86,13 +109,11 @@ def get_parameter(parameter_name):
         print(f"Error retrieving parameter {parameter_name}: {str(e)}")
         return None
 
-
 class TokenData:
     def __init__(self, id_token, access_token, refresh_token):
         self.id_token = id_token
         self.access_token = access_token
         self.refresh_token = refresh_token
-
 
 def exchange_code_for_tokens(code):
     token_data = None

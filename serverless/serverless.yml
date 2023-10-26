@@ -1,7 +1,7 @@
 org: sharibxw
 app: time-to-post
 service: serverless
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -32,7 +32,7 @@ resources:
       Properties:
         RoleName: TimeToPostScheduledLambdaRole
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: "2012-10-17"
           Statement:
             - Effect: Allow
               Principal:
@@ -42,14 +42,14 @@ resources:
         Policies:
           - PolicyName: DynamoPolicy
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: "2012-10-17"
               Statement:
                 - Effect: Allow
                   Action: dynamodb:GetItem
                   Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/Time-To-Post-Tokens-Table"
           - PolicyName: S3Policy
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: "2012-10-17"
               Statement:
                 - Effect: Allow
                   Action:
@@ -84,5 +84,19 @@ functions:
       - http:
           method: get
           path: time-to-post
+  authorize:
+    handler: src/authorize.handler
+    environment:
+      LINKEDIN_AUTH_URL: ${ssm:/time-to-post/linkedin-auth-url}
+      LINKEDIN_ACCESS_TOKEN_URL: ${ssm:/time-to-post/linkedin-access-token-url}
+      LINKEDIN_CLIENT_ID: ${ssm:/time-to-post/linkedin-client-id}
+      LINKEDIN_AUTH_REDIRECT_URI: ${ssm:/time-to-post/linkedin-auth-redirect-uri}
+      LINKEDIN_AUTH_SCOPE: ${ssm:/time-to-post/linkedin-auth-scope}
+      LOGIN_URI: ${ssm:/time-to-post/login-url}
+    events:
+      - http:
+          method: get
+          path: time-to-post/authorize
+
 plugins:
   - serverless-python-requirements

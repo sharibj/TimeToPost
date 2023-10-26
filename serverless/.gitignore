@@ -15,7 +15,6 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-**/__pycache__/
 
 
 # Serverless directories
@@ -23,3 +22,5 @@ var/
 venv
 .idea
 .mypy_cache
+.pytest_cache/
+**/__pycache__/
