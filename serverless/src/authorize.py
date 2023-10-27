@@ -4,14 +4,15 @@ import boto3
 import urllib.request
 import urllib.parse
     
-def handler(event, context):
+def handler(event, context):  
+    user_id = event['requestContext']['authorizer']['principalId']                                        
     code = get_code_from_event(event)
     if not code:
         return get_auth_code_redirection()
 
     access_token = exchange_code_for_access_token(code)
-    # TODO Store access_token in dynamo
-    print (access_token)
+    # TODO store in dynamo by  assuming IAM role
+    # store_in_dynamo(user_id,access_token)
     return {
         "statusCode": 302,
         "headers": {
@@ -87,3 +88,13 @@ def get_parameter(parameter_name):
     except Exception as e:
         print(f"Error retrieving parameter {parameter_name}: {str(e)}")
         return None
+
+def store_in_dynamo(user_id,access_token):   
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(os.environ.get("DYNAMO_TABLE_NAME"))
+    item = {
+        'username': user_id,
+        'channel': "linkedin",
+        'access_token': access_token
+    }
+    table.put_item(Item=item)

@@ -74,7 +74,7 @@ def get_ui_response(id_token):
         "statusCode": 200,
         "headers": {
             "Content-Type": "text/html",
-            "Set-Cookie": f"id_token={id_token}; Max-Age=3600; Secure; HttpOnly; SameSite=Strict",
+            "Set-Cookie": f"id_token={id_token}; Max-Age=3600; Secure; HttpOnly; SameSite=None"
         },
         "body": html_content
     }

@@ -93,10 +93,22 @@ functions:
       LINKEDIN_AUTH_REDIRECT_URI: ${ssm:/time-to-post/linkedin-auth-redirect-uri}
       LINKEDIN_AUTH_SCOPE: ${ssm:/time-to-post/linkedin-auth-scope}
       LOGIN_URI: ${ssm:/time-to-post/login-url}
+      DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
     events:
       - http:
           method: get
           path: time-to-post/authorize
+          authorizer:
+            name: lambda-authorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Cookie
+            type: REQUEST
+  lambda-authorizer:
+    handler: src/lambda_authorizer.handler
+    environment:
+      REGION: "${aws:region}"
+      COGNITO_USERPOOL_ID: ${ssm:/time-to-post/cognito-userpool-id}
+      COGNITO_IDENTITYPOOL_ID: ${ssm:/time-to-post/cognito-identitypool-id}
 
 plugins:
   - serverless-python-requirements
