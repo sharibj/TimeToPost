@@ -103,6 +103,12 @@ functions:
             resultTtlInSeconds: 300
             identitySource: method.request.header.Cookie
             type: REQUEST
+          # request:
+          #   parameters:
+          #     headers:
+          #       AccessKeyId: true
+          #       SecretKey: true
+          #       SessionToken: true
   lambda-authorizer:
     handler: src/lambda_authorizer.handler
     environment:

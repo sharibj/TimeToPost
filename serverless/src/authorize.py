@@ -3,9 +3,19 @@ import os
 import boto3
 import urllib.request
 import urllib.parse
+import Credentials
     
-def handler(event, context):  
-    user_id = event['requestContext']['authorizer']['principalId']                                        
+def handler(event, context):
+    print(event)
+    user_id = event['requestContext']['authorizer']['principalId']
+    access_key_id = event['requestContext']['authorizer']['AccessKeyId']
+    secret_key = event['requestContext']['authorizer']['SecretKey']
+    session_token = event['requestContext']['authorizer']['SessionToken']    
+    print(">>>")                               
+    print(user_id)
+    print(access_key_id)
+    print(secret_key)
+    print(session_token)
     code = get_code_from_event(event)
     if not code:
         return get_auth_code_redirection()

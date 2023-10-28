@@ -29,7 +29,13 @@ def get_sub_from_jwt(jwt):
 
     return user_id
 
-def get_creds_for_id(id_token):
+class Credentials:
+    def __init__(self, access_key_id, secret_access_key, session_token):
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key
+        self.session_token = session_token
+
+def get_credentials_for_id(id_token):
     # Fetch environment variables
     region = os.environ.get("REGION")
     user_pool_id = os.environ.get("COGNITO_USERPOOL_ID")
@@ -48,16 +54,33 @@ def get_creds_for_id(id_token):
         IdentityPoolId=identity_pool_id,
         Logins=logins
     )
-    print(">>cognito_identity.get_id response")
-    print(response)
     identity_id = response['IdentityId']
-    print(">>identity_id")
-    print(identity_id)
-    return response
 
-def generatePolicy(principalId, effect, methodArn):
+    # Get the credentials
+    cognito_credentials = cognito_identity.get_credentials_for_identity(
+        IdentityId=identity_id,
+        Logins=logins
+    )
+
+    # Convert the credentials to a dictionary
+    credentials = {
+        'AccessKeyId': cognito_credentials['Credentials']['AccessKeyId'],
+        'SecretKey': cognito_credentials['Credentials']['SecretKey'],
+        'SessionToken': cognito_credentials['Credentials']['SessionToken']
+    }
+
+    # # Convert the dictionary to a JSON string
+    # credentials = json.dumps(credentials_dict)
+
+    
+    print(credentials)
+    return credentials
+
+
+def generatePolicy(principalId, effect, methodArn, context):
     authResponse = {}
     authResponse["principalId"] = principalId
+    authResponse["context"] = context
     base = methodArn.split("/")[0]
     stage = methodArn.split("/")[1]
     arn = base + "/" + stage + "/*/*"
@@ -82,9 +105,11 @@ def handler(event, context):
     print(context)
     try:
         token = get_auth_token_from_cookie(event)
-        get_creds_for_id(token)
+        credentials = get_credentials_for_id(token)
         username_from_token = get_sub_from_jwt(token)
-        return generatePolicy(username_from_token, "Allow", event["methodArn"])
+        policy =  generatePolicy(username_from_token, "Allow", event["methodArn"],credentials)
+        print(policy)
+        return policy
     except Exception as e:
         print(e)
         return generatePolicy(None, "Deny", event["methodArn"])
