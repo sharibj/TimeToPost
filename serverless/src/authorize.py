@@ -3,26 +3,30 @@ import os
 import boto3
 import urllib.request
 import urllib.parse
-import Credentials
-    
+
+class Credentials:
+    def __init__(self, access_key_id, secret_access_key, session_token):
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key
+        self.session_token = session_token
+
 def handler(event, context):
     print(event)
-    user_id = event['requestContext']['authorizer']['principalId']
-    access_key_id = event['requestContext']['authorizer']['AccessKeyId']
-    secret_key = event['requestContext']['authorizer']['SecretKey']
-    session_token = event['requestContext']['authorizer']['SessionToken']    
+    user_id = event['requestContext']['authorizer']['principalId']  
+    credentials = Credentials(
+        access_key_id=event['requestContext']['authorizer']['AccessKeyId'],
+        secret_access_key=event['requestContext']['authorizer']['SecretKey'],
+        session_token=event['requestContext']['authorizer']['SessionToken']
+    )
     print(">>>")                               
     print(user_id)
-    print(access_key_id)
-    print(secret_key)
-    print(session_token)
+    print(credentials)
     code = get_code_from_event(event)
     if not code:
         return get_auth_code_redirection()
 
     access_token = exchange_code_for_access_token(code)
-    # TODO store in dynamo by  assuming IAM role
-    # store_in_dynamo(user_id,access_token)
+    put_tokens_in_dynamodb(user_id, access_token, credentials)
     return {
         "statusCode": 302,
         "headers": {
@@ -99,12 +103,30 @@ def get_parameter(parameter_name):
         print(f"Error retrieving parameter {parameter_name}: {str(e)}")
         return None
 
-def store_in_dynamo(user_id,access_token):   
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(os.environ.get("DYNAMO_TABLE_NAME"))
-    item = {
-        'username': user_id,
-        'channel': "linkedin",
-        'access_token': access_token
-    }
-    table.put_item(Item=item)
+def put_tokens_in_dynamodb(user_id, access_token, credentials):
+    # Initialize a DynamoDB resource
+    dynamodb = boto3.resource('dynamodb',
+                              aws_access_key_id=credentials.access_key_id,
+                              aws_secret_access_key=credentials.secret_access_key,
+                              aws_session_token=credentials.session_token,
+                              region_name=os.environ.get("REGION"))
+
+    try:
+        # Specify the table name
+        # TODO Add CDK code to create this table and set the name in param store
+        table = dynamodb.Table(os.environ.get("DYNAMO_TABLE_NAME"))
+
+        # Define the item to be added
+        item = {
+            'username': user_id,
+            'channel': "linkedin",
+            'access_token': access_token
+        }
+
+        # Use the put_item method to add the item to the table
+        table.put_item(Item=item)
+
+    except Exception as e:
+        # Handle exceptions, e.g., table not found, permissions issues, etc.
+        print(f"Error adding item to DynamoDB: {str(e)}")
+        return False

@@ -94,6 +94,7 @@ functions:
       LINKEDIN_AUTH_SCOPE: ${ssm:/time-to-post/linkedin-auth-scope}
       LOGIN_URI: ${ssm:/time-to-post/login-url}
       DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
+      REGION: "${aws:region}"
     events:
       - http:
           method: get
