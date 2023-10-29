@@ -10,6 +10,8 @@ import software.amazon.awscdk.services.dynamodb.TableProps;
 import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.s3.BucketProps;
+import software.amazon.awscdk.services.s3.CorsRule;
+import software.amazon.awscdk.services.s3.HttpMethods;
 import software.amazon.awscdk.services.ssm.StringParameter;
 import software.constructs.Construct;
 
@@ -28,6 +30,16 @@ public class UserStack extends Stack {
                 .publicReadAccess(false)
                 .versioned(true)
                 .build());
+        
+        // Define the CORS rule
+        CorsRule corsRule = CorsRule.builder()
+                .allowedMethods(List.of(HttpMethods.PUT))
+                .allowedOrigins(List.of("https://vxtdoymdo9.execute-api.eu-central-1.amazonaws.com")) //TODO: Replace hardcoded domain name
+                .build();
+
+        // Add the CORS rule to the bucket
+        bucket.addCorsRule(corsRule);
+
         Table tokensTable = new Table(this, "DynamoDBTable", TableProps
                 .builder()
                 .tableName(APP_NAME + "-Tokens-Table")
