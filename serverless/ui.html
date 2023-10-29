@@ -68,28 +68,42 @@
 
             if (file) {
                 if (file.type === "text/plain") {
-                    const url = 'YOUR_API_ENDPOINT'; // Replace with your API endpoint
-
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    fetch(url, {
-                        method: 'POST',
-                        body: formData
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('File uploaded successfully:', data);
-                        })
-                        .catch(error => {
-                            console.error('Error uploading file:', error);
-                        });
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                const response = JSON.parse(xhr.responseText);
+                                const uploadURL = response.uploadURL;
+                                uploadFileToS3(uploadURL, file);
+                            } else {
+                                console.error('Error getting upload URL:', xhr.status);
+                            }
+                        }
+                    };
+                    xhr.send();
                 } else {
                     console.error('Please upload a valid text file.');
                 }
             } else {
                 console.error('No file selected.');
             }
+        }
+
+        function uploadFileToS3(uploadURL, file) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadURL, true);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        console.log('File uploaded successfully');
+                    } else {
+                        console.error('Error uploading file:', xhr.status);
+                    }
+                }
+            };
+            xhr.send(file);
         }
 
         function downloadPoolFile() {
