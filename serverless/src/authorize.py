@@ -22,7 +22,8 @@ def handler(event, context):
         return get_auth_code_redirection()
 
     access_token = exchange_code_for_access_token(code)
-    put_tokens_in_dynamodb(username, access_token, credentials)
+    linkedin_sub = get_sub_from_linkedin(access_token)
+    put_tokens_in_dynamodb(username, linkedin_sub, access_token, credentials)
     return {
         "statusCode": 302,
         "headers": {
@@ -99,7 +100,25 @@ def get_parameter(parameter_name):
         print(f"Error retrieving parameter {parameter_name}: {str(e)}")
         return None
 
-def put_tokens_in_dynamodb(username, access_token, credentials):
+def get_sub_from_linkedin(access_token):
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    url = "https://api.linkedin.com/v2/userinfo"
+
+    req = urllib.request.Request(url, headers=headers)
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = response.read()
+            response_data = json.loads(data)
+            return response_data["sub"] if "sub" in response_data else None
+    except urllib.error.HTTPError as e:
+        print('HTTPError: ', e.code)
+    except urllib.error.URLError as e:
+        print('URLError: ', e.reason)
+
+def put_tokens_in_dynamodb(username, linkedin_sub, access_token, credentials):
     # Initialize a DynamoDB resource
     dynamodb = boto3.resource('dynamodb',
                               aws_access_key_id=credentials.access_key_id,
@@ -116,6 +135,7 @@ def put_tokens_in_dynamodb(username, access_token, credentials):
         item = {
             'username': username,
             'channel': "linkedin",
+            'linkedin_sub': linkedin_sub,
             'access_token': access_token
         }
 

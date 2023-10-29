@@ -45,25 +45,27 @@ def handler(event, context):
         )
 
         # Make a POST request to the LinkedIn REST API
-        url = 'https://api.linkedin.com/rest/posts'
+        url = 'https://api.linkedin.com/v2/ugcPosts'
         headers = {
             'Authorization': 'Bearer %s' % item['access_token'],
             'X-Restli-Protocol-Version': '2.0.0',
-            'LinkedIn-Version': '{version number in the format YYYYMM}',
             'Content-Type': 'application/json'
         }
         print(headers)
         data = {
-            "author": "urn:li:organization:5515715",
-            "commentary": " ".join(parsed_lines),  # Assuming parsed_lines is a list of strings
-            "visibility": "PUBLIC",
-            "distribution": {
-                "feedDistribution": "MAIN_FEED",
-                "targetEntities": [],
-                "thirdPartyDistributionChannels": []
-            },
+            "author": "urn:li:person:%s" % item['linkedin_sub'],
             "lifecycleState": "PUBLISHED",
-            "isReshareDisabledByAuthor": False
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": " ".join(parsed_lines)
+                    },
+                    "shareMediaCategory": "NONE"
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
         }
         # Make the POST request
         req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
@@ -71,11 +73,14 @@ def handler(event, context):
         response_code = response.getcode()
 
         # Print the status code of the POST request
+        print(f"Status Code: {response_code}")
 
         # Print the extracted lines
+        content = response.read().decode('utf-8')
+
         return {
             'statusCode': 200,
-            'body': response
+            'body': content
         }
 
     else:
