@@ -26,14 +26,13 @@ def handler(event, context):
         bucket_name = os.environ.get("POSTS_BUCKET_NAME")
         object_key = '%s/%s' % (username, os.environ.get("POSTS_OBJECT_NAME"))
         expiration = 60  # 1 minute
-        url = s3_client.generate_presigned_url('put_object',
+        url = s3_client.generate_presigned_url('get_object',
                                             Params={'Bucket': bucket_name,
-                                                    'Key': object_key,
-                                                    'ContentType': 'text/plain'},
+                                                    'Key': object_key},
                                             ExpiresIn=expiration)
         return {
             'statusCode': 200,
-            'body': json.dumps({'uploadURL': url})
+            'body': json.dumps({'downloadURL': url})
         }
     except Exception as e:
         print(f"An error occurred: {e}")

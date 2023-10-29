@@ -100,6 +100,22 @@ functions:
             resultTtlInSeconds: 300
             identitySource: method.request.header.Cookie
             type: REQUEST
+  download:
+    handler: src/download.handler
+    environment:
+      REGION: "${aws:region}"
+      DYNAMO_TABLE_NAME: "Time-To-Post-Tokens-Table"
+      POSTS_BUCKET_NAME: "time-to-post-pool-bucket"
+      POSTS_OBJECT_NAME: "posts.txt"
+    events:
+      - http:
+          method: get
+          path: time-to-post/download
+          authorizer:
+            name: lambda-authorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Cookie
+            type: REQUEST
   authorize:
     handler: src/authorize.handler
     environment:

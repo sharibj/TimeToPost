@@ -107,8 +107,28 @@
         }
 
         function downloadPoolFile() {
-            // Add your download pool file logic here
-            console.log("Downloading pool file...");
+            // Add your upload pool file logic here
+            console.log("Uploading pool file...");
+            let currentUrl = window.location.href;
+            // Remove any query parameters from the current URL
+            const urlWithoutParams = currentUrl.split("?")[0];
+            // Append '/upload' to the current URL
+            const url = `${urlWithoutParams}/download`;
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        const s3_url = response.downloadURL;
+                        console.log(s3_url)
+                        window.open(s3_url, '_blank');
+                    } else {
+                        console.error('Error getting download URL:', xhr.status);
+                    }
+                }
+            };
+            xhr.send();
         }
 
         function initiateLinkedInAccess() {
