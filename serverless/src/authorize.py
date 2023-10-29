@@ -11,22 +11,18 @@ class Credentials:
         self.session_token = session_token
 
 def handler(event, context):
-    print(event)
-    user_id = event['requestContext']['authorizer']['principalId']  
+    username = event['requestContext']['authorizer']['principalId']  
     credentials = Credentials(
         access_key_id=event['requestContext']['authorizer']['AccessKeyId'],
         secret_access_key=event['requestContext']['authorizer']['SecretKey'],
         session_token=event['requestContext']['authorizer']['SessionToken']
     )
-    print(">>>")                               
-    print(user_id)
-    print(credentials)
     code = get_code_from_event(event)
     if not code:
         return get_auth_code_redirection()
 
     access_token = exchange_code_for_access_token(code)
-    put_tokens_in_dynamodb(user_id, access_token, credentials)
+    put_tokens_in_dynamodb(username, access_token, credentials)
     return {
         "statusCode": 302,
         "headers": {
@@ -103,7 +99,7 @@ def get_parameter(parameter_name):
         print(f"Error retrieving parameter {parameter_name}: {str(e)}")
         return None
 
-def put_tokens_in_dynamodb(user_id, access_token, credentials):
+def put_tokens_in_dynamodb(username, access_token, credentials):
     # Initialize a DynamoDB resource
     dynamodb = boto3.resource('dynamodb',
                               aws_access_key_id=credentials.access_key_id,
@@ -118,7 +114,7 @@ def put_tokens_in_dynamodb(user_id, access_token, credentials):
 
         # Define the item to be added
         item = {
-            'username': user_id,
+            'username': username,
             'channel': "linkedin",
             'access_token': access_token
         }
