@@ -76,7 +76,6 @@ def get_credentials_for_id(id_token):
     print(credentials)
     return credentials
 
-
 def generatePolicy(principalId, effect, methodArn, context):
     authResponse = {}
     authResponse["principalId"] = principalId

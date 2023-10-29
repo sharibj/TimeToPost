@@ -25,6 +25,12 @@ def handler(event, context):
         posts = s3_client.get_object(Bucket=bucket_name, Key=object_key)
         # Get posts.txt from the S3 bucket
         file_content = posts['Body'].read().decode('utf-8')
+        
+        # TODO Consider doing something to stop running this for empty pool
+        ## One Idea -
+        ### Create scheduler from authorize when access token is placed in Dynamo (also, maybe create s3 if it doesn't exist)
+        ### Disable scheduler from push when file becomes empty
+        ### Enable scheduler from upload if (scheduler exists and disabled)
 
         # Parse text to get lines until "---" delimiter or EOF
         lines = file_content.split('\n')
