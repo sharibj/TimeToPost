@@ -4,12 +4,6 @@
 <head>
     <title>Token Flow</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-    <!-- peer dependency -->
-    <script src="https://unpkg.com/react@16.3.1/umd/react.development.js"></script>
-    <!-- lib (change x.x.x for the version you would like) -->
-    <script src="https://unpkg.com/react-beautiful-dnd@x.x.x/dist/react-beautiful-dnd.js"></script>
-    <!-- needed to mount your react app -->
-    <script src="https://unpkg.com/react-dom@16.3.1/umd/react-dom.development.js"></script>
 </head>
 
 <body class="flex justify-center items-center h-screen">
@@ -27,21 +21,31 @@
                 </svg>
             </div>
         </div>
-        <div class="grid grid-flow-row grid-rows-1 grid-cols-2 gap-4">
-            <input type="file" id="fileInput">
-            <button
-                class="hover:text-white hover:bg-black px-6 h-12 uppercase font-semibold tracking-wider border-2 border-black bg-teal-400 text-black"
-                onclick="uploadPoolFile()">Upload Pool File</button>
+        <div class="grid grid-flow-row grid-rows-1 grid-cols-1 gap-4">
+            <div class="grid grid-flow-row grid-rows-1 grid-cols-2 gap-2">
+                <label for="file_input"
+                    class="inline-flex items-center px-4 py-2 bg-teal-400 border-2 border-black font-semibold text-black hover:bg-black hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span id="file_name_display">Choose File</span>
+                </label>
+                <input class="hidden" id="file_input" type="file" onchange="displayFileName()">
+                <!-- <input class="border-2 border-black px-3 py-2" id="file_input" type="file"> -->
+                <button
+                    class="hover:text-white hover:bg-black px-6 h-12 uppercase font-semibold tracking-wider border-2 border-black bg-teal-400 text-black"
+                    onclick="uploadPoolFile()">Upload Pool File</button>
+            </div>
             <button
                 class="hover:text-white hover:bg-black px-6 h-12 uppercase font-semibold tracking-wider border-2 border-black bg-teal-400 text-black"
                 onclick="downloadPoolFile()">Download Pool File</button>
         </div>
-        <div class="grid grid-flow-row grid-rows-1 grid-cols-1 gap-4">
 
-            <button
-                class="hover:text-white hover:bg-black px-6 h-12 uppercase font-semibold tracking-wider border-2 border-black bg-teal-400 text-black"
-                onclick="initiateLinkedInAccess()">Allow LinkedIn Access</button>
-        </div>
+        <button
+            class="hover:text-white hover:bg-black px-6 h-12 uppercase font-semibold tracking-wider border-2 border-black bg-teal-400 text-black"
+            onclick="initiateLinkedInAccess()">Allow LinkedIn Access</button>
     </div>
 
     <script>
@@ -58,15 +62,15 @@
         function uploadPoolFile() {
             // Add your upload pool file logic here
             console.log("Uploading pool file...");
+            showSpinner();
             let currentUrl = window.location.href;
             // Remove any query parameters from the current URL
             const urlWithoutParams = currentUrl.split("?")[0];
             // Append '/upload' to the current URL
             const url = `${urlWithoutParams}/upload`;
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-
-            if (file) {
+            const fileInput = document.getElementById('file_input');
+            if (fileInput && fileInput.files.length > 0 && fileInput.files[0]) {
+                const file = fileInput.files[0];
                 if (file.type === "text/plain") {
                     const xhr = new XMLHttpRequest();
                     xhr.open('GET', url, true);
@@ -79,14 +83,17 @@
                             } else {
                                 console.error('Error getting upload URL:', xhr.status);
                             }
+                            hideSpinner();
                         }
                     };
                     xhr.send();
                 } else {
                     console.error('Please upload a valid text file.');
+                    hideSpinner();
                 }
             } else {
                 console.error('No file selected.');
+                hideSpinner();
             }
         }
 
@@ -109,6 +116,7 @@
         function downloadPoolFile() {
             // Add your upload pool file logic here
             console.log("Uploading pool file...");
+            showSpinner();
             let currentUrl = window.location.href;
             // Remove any query parameters from the current URL
             const urlWithoutParams = currentUrl.split("?")[0];
@@ -126,6 +134,7 @@
                     } else {
                         console.error('Error getting download URL:', xhr.status);
                     }
+                    hideSpinner();
                 }
             };
             xhr.send();
@@ -150,6 +159,20 @@
         function showSpinner() {
             var spinnerElement = document.getElementById("spinner");
             spinnerElement.classList.remove("invisible");
+        }
+
+        function hideSpinner() {
+            var spinnerElement = document.getElementById("spinner");
+            spinnerElement.classList.add("invisible");
+        }
+        function displayFileName() {
+            const fileInput = document.getElementById('file_input');
+            const fileNameDisplay = document.getElementById('file_name_display');
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = fileInput.files[0].name;
+            } else {
+                fileNameDisplay.textContent = 'Choose File';
+            }
         }
     </script>
 </body>
