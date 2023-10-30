@@ -34,7 +34,7 @@ public class UserStack extends Stack {
         // Define the CORS rule
         CorsRule corsRule = CorsRule.builder()
                 .allowedMethods(List.of(HttpMethods.GET, HttpMethods.HEAD, HttpMethods.PUT))
-                .allowedOrigins(List.of("https://vxtdoymdo9.execute-api.eu-central-1.amazonaws.com")) //TODO: Replace hardcoded domain name
+                .allowedOrigins(List.of("https://timetopost.jafarisharib.com")) //TODO: Replace hardcoded domain name
                 .build();
 
         // Add the CORS rule to the bucket

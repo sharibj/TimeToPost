@@ -128,7 +128,7 @@ public class CognitoStack extends Stack {
                                 .authorizationCodeGrant(true)
                                 .build())
                         .scopes(List.of(OAuthScope.OPENID, OAuthScope.PROFILE, OAuthScope.EMAIL))
-                        .callbackUrls(List.of("https://jwt.io"))
+                        .callbackUrls(List.of("https://timetopost.jafarisharib.com"))
 //                        .logoutUrls(List.of("https://my-app-domain.com/signin"))
                         .build())
                 .build());

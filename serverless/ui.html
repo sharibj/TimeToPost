@@ -66,8 +66,9 @@
             let currentUrl = window.location.href;
             // Remove any query parameters from the current URL
             const urlWithoutParams = currentUrl.split("?")[0];
+            const baseUrl = urlWithoutParams.endsWith('/') ? urlWithoutParams : urlWithoutParams+'/';
             // Append '/upload' to the current URL
-            const url = `${urlWithoutParams}/upload`;
+            const url = `${baseUrl}upload`;
             const fileInput = document.getElementById('file_input');
             if (fileInput && fileInput.files.length > 0 && fileInput.files[0]) {
                 const file = fileInput.files[0];
@@ -120,8 +121,9 @@
             let currentUrl = window.location.href;
             // Remove any query parameters from the current URL
             const urlWithoutParams = currentUrl.split("?")[0];
+            const baseUrl = urlWithoutParams.endsWith('/') ? urlWithoutParams : urlWithoutParams+'/';
             // Append '/upload' to the current URL
-            const url = `${urlWithoutParams}/download`;
+            const url = `${baseUrl}download`;
             const xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             xhr.onreadystatechange = function () {
@@ -148,9 +150,10 @@
 
             // Remove any query parameters from the current URL
             const urlWithoutParams = currentUrl.split("?")[0];
+            const baseUrl = urlWithoutParams.endsWith('/') ? urlWithoutParams : urlWithoutParams+'/';
 
             // Append '/authorize' to the current URL
-            const redirectWithAuthorize = `${urlWithoutParams}/authorize`;
+            const redirectWithAuthorize = `${baseUrl}authorize`;
 
             // Redirect the user to the modified URL
             window.location.href = redirectWithAuthorize;

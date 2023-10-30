@@ -17,13 +17,12 @@ provider:
           Resource: "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/time-to-post/*"
 
 custom:
-  serverlessSsmFetch:
-    COGNITO_URL: /time-to-post/cognito-hostedui-url
-    COGNITO_USERPOOL_ID: /time-to-post/cognito-userpool-id
-    COGNITO_IDENTITYPOOL_ID: /time-to-post/cognito-identitypool-id
-    COGNITO_CLIENT_ID: /time-to-post/cognito-client-id
-    COGNITO_DOMAIN: /time-to-post/cognito-domain
-    LOGIN_URI: /time-to-post/login-url
+  customDomain:
+    domainName: timetopost.jafarisharib.com
+    basePath: ""
+    createRoute53Record: true
+    certificateArn: ${ssm:/time-to-post/certificate-arn}
+    hostedZoneId: ${ssm:/time-to-post/hosted-zone-id}
 
 resources:
   Resources:
@@ -83,7 +82,7 @@ functions:
     events:
       - http:
           method: get
-          path: time-to-post
+          path: /
   upload:
     handler: src/upload.handler
     environment:
@@ -94,7 +93,7 @@ functions:
     events:
       - http:
           method: get
-          path: time-to-post/upload
+          path: /upload
           authorizer:
             name: lambda-authorizer
             resultTtlInSeconds: 300
@@ -110,7 +109,7 @@ functions:
     events:
       - http:
           method: get
-          path: time-to-post/download
+          path: /download
           authorizer:
             name: lambda-authorizer
             resultTtlInSeconds: 300
@@ -130,7 +129,7 @@ functions:
     events:
       - http:
           method: get
-          path: time-to-post/authorize
+          path: /authorize
           authorizer:
             name: lambda-authorizer
             resultTtlInSeconds: 300
@@ -151,3 +150,4 @@ functions:
 
 plugins:
   - serverless-python-requirements
+  - serverless-domain-manager

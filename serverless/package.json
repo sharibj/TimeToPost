@@ -1,5 +1,7 @@
 {
   "devDependencies": {
+    "serverless-domain-manager": "^7.1.2",
+    "serverless-plugin-custom-domain": "^3.0.0",
     "serverless-python-requirements": "^6.0.0",
     "serverless-ssm-fetch": "^2.0.0"
   }
