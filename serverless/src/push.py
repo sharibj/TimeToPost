@@ -43,7 +43,7 @@ def handler(event, context):
 
         # Remove these lines from the file content
         updated_content = '\n'.join(lines[len(parsed_lines) + 1:])
-
+        post = '\n'.join(parsed_lines)
         # Put the updated content back in S3
         s3_client.put_object(
             Bucket=bucket_name,
@@ -65,7 +65,7 @@ def handler(event, context):
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
                     "shareCommentary": {
-                        "text": " ".join(parsed_lines)
+                        "text": post
                     },
                     "shareMediaCategory": "NONE"
                 }
